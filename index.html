@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mei's Pokémon Trainer Quiz</title>
+<style>
+:root{
+  --bg1:#1b2a6b; --bg2:#0d1440; --card:#ffffff; --ink:#1a1f3a; --muted:#5b6285;
+  --yellow:#ffcb05; --blue:#3b4cca; --red:#e8383d; --green:#2fbf71; --grey:#c8cce0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;
+  color:#fff;
+  background:radial-gradient(1200px 600px at 20% -10%,#3446b8 0,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;
+  padding:16px;
+}
+.wrap{max-width:980px;margin:0 auto}
+h1,h2{margin:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.logo{font-weight:900;letter-spacing:.5px;font-size:20px;color:var(--yellow);text-shadow:0 2px 0 #3b4cca,0 0 12px rgba(255,203,5,.3)}
+.iconbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+.iconbtn:hover{background:rgba(255,255,255,.22)}
+
+.stage{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.host{position:relative}
+.portrait{
+  width:100%;aspect-ratio:832/1280;border-radius:22px;overflow:hidden;background:#fff;
+  border:4px solid var(--yellow);box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.portrait img{width:100%;height:100%;object-fit:cover;display:block}
+.portrait img.pop{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1.06)}100%{transform:scale(1)}}
+.bubble{
+  position:relative;margin-top:14px;background:#fff;color:var(--ink);border-radius:16px;padding:12px 14px;
+  font-size:16px;line-height:1.35;box-shadow:0 6px 16px rgba(0,0,0,.3);min-height:60px;
+}
+.bubble:before{content:"";position:absolute;top:-10px;left:36px;border:10px solid transparent;border-top:0;border-bottom-color:#fff}
+.bubble b{color:var(--blue)}
+
+.panel{background:var(--card);color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.hidden{display:none!important}
+
+/* title */
+.title h2{font-size:34px;line-height:1.05;color:var(--blue)}
+.title p{color:var(--muted);font-size:17px;line-height:1.45}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.mode{
+  border:3px solid var(--grey);border-radius:16px;padding:14px;cursor:pointer;background:#f6f7fd;text-align:left;font:inherit;color:inherit;
+}
+.mode:hover{border-color:var(--blue)}
+.mode.sel{border-color:var(--blue);background:#eaedff}
+.mode .n{font-weight:900;font-size:19px}
+.mode .d{font-size:14px;color:var(--muted);margin-top:4px}
+.big{
+  display:inline-block;background:var(--red);color:#fff;border:0;border-radius:999px;padding:14px 30px;font-size:20px;font-weight:900;
+  cursor:pointer;box-shadow:0 5px 0 #a9262a;font-family:inherit;
+}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 #a9262a}
+.big.alt{background:var(--blue);box-shadow:0 5px 0 #2a37a0}
+.best{margin-top:16px;font-size:14px;color:var(--muted)}
+
+/* game */
+.hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pill{background:#eef0fb;border-radius:999px;padding:6px 12px;font-weight:700;font-size:15px}
+.pill.fire{background:#ffe4cc;color:#b24a00}
+.balls{display:flex;gap:6px;margin-bottom:10px}
+.ball{width:22px;height:22px;border-radius:50%;border:2px solid #1a1f3a;position:relative;background:linear-gradient(#e8e8f0 50%,#e8e8f0 50%);opacity:.45}
+.ball:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:#fff;border:2px solid #1a1f3a;transform:translate(-50%,-50%)}
+.ball.on{opacity:1;box-shadow:0 0 0 3px var(--yellow)}
+.ball.got{opacity:1;background:linear-gradient(var(--red) 50%,#fff 50%)}
+.ball.miss{opacity:.35;background:linear-gradient(#999 50%,#ddd 50%)}
+.timer{height:12px;background:#e6e8f5;border-radius:99px;overflow:hidden;margin-bottom:16px}
+.timer>div{height:100%;width:100%;background:linear-gradient(90deg,var(--green),var(--yellow));transition:width .1s linear}
+.timer.low>div{background:linear-gradient(90deg,var(--red),#ff8a3d)}
+.cat{font-size:13px;font-weight:900;letter-spacing:1.5px;color:var(--blue);text-transform:uppercase}
+.q{font-size:24px;font-weight:800;line-height:1.25;margin:6px 0 16px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ans{
+  display:flex;align-items:center;gap:10px;text-align:left;font:inherit;font-size:18px;font-weight:700;color:var(--ink);
+  background:#f2f4ff;border:3px solid #d5d9f2;border-radius:14px;padding:14px;cursor:pointer;min-height:64px;
+}
+.ans:hover:not(:disabled){border-color:var(--blue);background:#e8ebff}
+.ans .k{flex:none;width:28px;height:28px;border-radius:8px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:14px}
+.ans.right{background:#d8f6e5;border-color:var(--green)}
+.ans.right .k{background:var(--green)}
+.ans.wrong{background:#ffe0e1;border-color:var(--red)}
+.ans.wrong .k{background:var(--red)}
+.ans.gone{opacity:.25;pointer-events:none}
+.ans:disabled{cursor:default}
+.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.feedback{margin-top:16px;background:#fff8d6;border:2px solid var(--yellow);border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.4}
+.feedback .pts{font-weight:900;color:#b24a00}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px;flex-wrap:wrap}
+.life{background:#fff;border:3px solid var(--blue);color:var(--blue);border-radius:999px;padding:8px 16px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit}
+.life:disabled{opacity:.35;cursor:default}
+
+/* result */
+.result h2{font-size:30px;color:var(--blue)}
+.rank{font-size:40px;font-weight:900;color:var(--red);margin:6px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.stat{background:#eef0fb;border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font-size:26px}
+.stat span{font-size:13px;color:var(--muted)}
+.log{margin:10px 0;display:flex;gap:6px;flex-wrap:wrap}
+.foot{margin-top:18px;text-align:center;font-size:12px;color:rgba(255,255,255,.55)}
+
+@media (max-width:720px){
+  body{padding:10px}
+  .stage{grid-template-columns:1fr;gap:12px}
+  .host{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+  .portrait{aspect-ratio:1/1;border-radius:50%;border-width:3px}
+  .portrait img{object-position:50% 38%}
+  .bubble{margin-top:0;font-size:15px;min-height:0}
+  .bubble:before{top:50%;left:-10px;border:10px solid transparent;border-left:0;border-right-color:#fff;margin-top:-10px}
+  .panel{padding:16px}
+  .title h2{font-size:28px}
+  .q{font-size:20px}
+  .answers{grid-template-columns:1fr}
+  .ans{font-size:17px;min-height:56px}
+  .modes{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo">⚡ TRAINER QUIZ</div>
+    <button class="iconbtn" id="mute">🔊 Sound on</button>
+  </div>
+
+  <div class="stage">
+    <aside class="host">
+      <div class="portrait"><img id="mei" src="img/a14-shy3.jpg" alt="Coach Mei, your quiz host"></div>
+      <div class="bubble" id="bubble"></div>
+    </aside>
+
+    <main>
+      <!-- TITLE -->
+      <section class="panel title" id="title">
+        <h2>Think you're a real<br>Pokémon Master?</h2>
+        <p>10 questions. Beat the clock. Every right answer catches a Poké Ball. Build a streak for bonus points!</p>
+        <div class="modes">
+          <button class="mode sel" data-mode="rookie"><div class="n">🟢 Rookie</div><div class="d">Starters, favorites &amp; the basics. 20 seconds each.</div></button>
+          <button class="mode" data-mode="champ"><div class="n">🔴 Champion</div><div class="d">Types, evolutions &amp; deep cuts. 15 seconds each.</div></button>
+        </div>
+        <button class="big" id="start">START QUIZ!</button>
+        <div class="best" id="best"></div>
+      </section>
+
+      <!-- GAME -->
+      <section class="panel hidden" id="game">
+        <div class="hud">
+          <span class="pill" id="qnum">Question 1/10</span>
+          <span class="pill fire" id="streak">🔥 Streak 0</span>
+          <span class="pill" id="score">⭐ 0</span>
+        </div>
+        <div class="balls" id="balls"></div>
+        <div class="timer" id="timer"><div></div></div>
+        <div class="cat" id="cat"></div>
+        <div class="q" id="q"></div>
+        <div class="answers" id="answers"></div>
+        <div class="row">
+          <button class="life" id="fifty">✂️ 50/50 (1 left)</button>
+          <span style="color:#8a90b3;font-size:13px">Tip: press 1–4 on your keyboard</span>
+        </div>
+        <div class="feedback hidden" id="feedback"></div>
+        <div class="row hidden" id="nextrow" style="justify-content:flex-end">
+          <button class="big alt" id="next">NEXT ▶</button>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="panel result hidden" id="result">
+        <h2>Quiz complete!</h2>
+        <div class="rank" id="rank"></div>
+        <div id="rankline" style="color:#5b6285;font-size:17px"></div>
+        <div class="log balls" id="log"></div>
+        <div class="stats">
+          <div class="stat"><b id="rCorrect">0</b><span>Correct</span></div>
+          <div class="stat"><b id="rScore">0</b><span>Score</span></div>
+          <div class="stat"><b id="rStreak">0</b><span>Best streak</span></div>
+        </div>
+        <button class="big" id="again">PLAY AGAIN</button>
+        <button class="big alt" id="copy" style="margin-left:8px">COPY SCORE</button>
+      </section>
+    </main>
+  </div>
+  <div class="foot">Fan-made quiz. Pokémon is © Nintendo / Creatures / GAME FREAK. Host art is original.</div>
+</div>
+
+<script>
+// ---------- QUESTION BANK ----------
+// d: e = easy, m = medium, h = hard. First answer is the correct one (shuffled at runtime).
+const BANK = [
+ {d:'e',c:'Basics',q:"Which Pokémon is Ash's best buddy?",a:["Pikachu","Squirtle","Eevee","Jigglypuff"],f:"Pikachu is an Electric type and the face of the whole franchise. Ash's refused to evolve in the anime!"},
+ {d:'e',c:'Starters',q:"Which Kanto starter is a Fire type?",a:["Charmander","Bulbasaur","Squirtle","Pidgey"],f:"Charmander's tail flame shows how healthy it is. If the flame goes out, it can get very sick."},
+ {d:'e',c:'Evolution',q:"What does Pikachu evolve into with a Thunder Stone?",a:["Raichu","Pichu","Plusle","Pachirisu"],f:"Pichu evolves into Pikachu through friendship, and Pikachu becomes Raichu with a Thunder Stone."},
+ {d:'e',c:'Types',q:"What type is Squirtle?",a:["Water","Fire","Grass","Ice"],f:"Squirtle → Wartortle → Blastoise. Blastoise has water cannons in its shell!"},
+ {d:'e',c:'Items',q:"What do you throw at a wild Pokémon to try to catch it?",a:["Poké Ball","Potion","Rare Candy","Escape Rope"],f:"Poké Balls come in lots of flavors: Great Ball, Ultra Ball, Master Ball (never fails!)."},
+ {d:'e',c:'Meet the Pokémon',q:"Which huge Pokémon loves to sleep and blocks roads in the games?",a:["Snorlax","Onix","Slowpoke","Wailord"],f:"Snorlax eats about 900 pounds of food a day. Then it naps."},
+ {d:'e',c:'Meet the Pokémon',q:"Which of these is NOT a Pokémon?",a:["Mario","Meowth","Eevee","Psyduck"],f:"Mario is a Nintendo hero, but not a Pokémon. Pokémon was made by Game Freak!"},
+ {d:'e',c:'Team Rocket',q:"Which Pokémon is Team Rocket's talking cat?",a:["Meowth","Persian","Skitty","Glameow"],f:"Meowth learned to talk in the anime by studying humans. It wanted to impress a Meowth named Meowsie."},
+ {d:'e',c:'Types',q:"Which type is strong against Water?",a:["Grass","Fire","Ice","Normal"],f:"Grass and Electric both beat Water. Water beats Fire, Ground and Rock."},
+ {d:'e',c:'Types',q:"Fire attacks are super effective against which type?",a:["Grass","Water","Rock","Dragon"],f:"Fire also burns Ice, Bug and Steel. But Water, Rock and Dragon resist it."},
+ {d:'e',c:'Meet the Pokémon',q:"Which pink Pokémon sings and puts everyone to sleep?",a:["Jigglypuff","Clefairy","Chansey","Slowbro"],f:"In the anime, Jigglypuff gets furious when everyone falls asleep, and draws on their faces with a marker."},
+ {d:'e',c:'Moves',q:"Which of these is Pikachu's signature attack?",a:["Thunderbolt","Flamethrower","Surf","Vine Whip"],f:"Thunderbolt is an Electric move that can paralyze the target."},
+ {d:'e',c:'Evolution',q:"What does Charmander evolve into first?",a:["Charmeleon","Charizard","Charjabug","Chimchar"],f:"Charmander becomes Charmeleon at level 16, then Charizard at level 36."},
+ {d:'e',c:'Anime',q:"What town is Ash from?",a:["Pallet Town","Viridian City","Pewter City","Lavender Town"],f:"Pallet Town is tiny. Its motto: \"Shades of your journey await!\""},
+ {d:'e',c:'Evolution',q:"Magikarp is famously useless, but what does it become?",a:["Gyarados","Feebas","Dragonair","Lapras"],f:"Magikarp evolves at level 20 into the terrifying Gyarados. Best glow-up ever."},
+ {d:'e',c:'Pokémon GO',q:"Which 2016 mobile game had everyone walking around outside catching Pokémon?",a:["Pokémon GO","Pokémon Snap","Pokémon Quest","Pokémon Sleep"],f:"Pokémon GO has been downloaded over a billion times."},
+ {d:'e',c:'Meet the Pokémon',q:"Which Pokémon is a yellow duck that is always getting headaches?",a:["Psyduck","Golduck","Ducklett","Farfetch'd"],f:"Psyduck's headaches are so bad that, when they get really bad, it unleashes psychic powers."},
+
+ {d:'m',c:'Pokédex',q:"Which Pokémon is #1 in the National Pokédex?",a:["Bulbasaur","Pikachu","Charmander","Mew"],f:"Bulbasaur is #001. Pikachu is #025, and Mew is #151."},
+ {d:'m',c:'Types',q:"Charizard is a Fire type and what other type?",a:["Flying","Dragon","Rock","Ground"],f:"Not Dragon! But Mega Charizard X is Fire/Dragon."},
+ {d:'m',c:'Pokédex',q:"How many Pokémon were in the original Kanto Pokédex?",a:["151","100","200","251"],f:"151 Pokémon in Red & Blue. There are now over 1,000!"},
+ {d:'m',c:'Types',q:"Gyarados is a Water type and what else?",a:["Flying","Dragon","Dark","Steel"],f:"Gyarados looks like a dragon, but it's Water/Flying. That's why Electric hits it 4× harder."},
+ {d:'m',c:'Types',q:"Which type of attack can't hurt Ghost-type Pokémon at all?",a:["Normal","Fire","Water","Grass"],f:"Normal and Fighting moves pass right through Ghosts. Ghost moves don't hurt Normal types either!"},
+ {d:'m',c:'Types',q:"Which type is totally immune to Electric attacks?",a:["Ground","Rock","Water","Steel"],f:"Ground types are immune to Electric. Use Ground moves on Electric types for a huge advantage."},
+ {d:'m',c:'Games',q:"Who's on the US cover of Pokémon Red?",a:["Charizard","Blastoise","Venusaur","Mewtwo"],f:"Charizard = Red, Blastoise = Blue. Pokémon Yellow had Pikachu."},
+ {d:'m',c:'Legendaries',q:"Which Pokémon was cloned from Mew's DNA?",a:["Mewtwo","Ditto","Deoxys","Celebi"],f:"Mewtwo was made in a lab by scientists on Cinnabar Island. It is NOT happy about it."},
+ {d:'m',c:'Starters',q:"Which one is Sinnoh's Fire-type starter?",a:["Chimchar","Piplup","Turtwig","Mudkip"],f:"Chimchar evolves into Monferno and Infernape. Piplup is Water, Turtwig is Grass."},
+ {d:'m',c:'Legendaries',q:"Which legendary is on the cover of Pokémon Scarlet?",a:["Koraidon","Miraidon","Zacian","Calyrex"],f:"Koraidon is on Scarlet and Miraidon is on Violet. You can ride them across Paldea!"},
+ {d:'m',c:'Starters',q:"Which is the Fire-type crocodile starter from Scarlet and Violet?",a:["Fuecoco","Sprigatito","Quaxly","Charmander"],f:"Fuecoco evolves into Crocalor and Skeledirge, a singing skeleton crocodile."},
+ {d:'m',c:'Regions',q:"Pokémon Sword and Shield take place in which region?",a:["Galar","Kalos","Alola","Unova"],f:"Galar is inspired by the United Kingdom. That's where you find Dynamax and Gigantamax!"},
+ {d:'m',c:'Evolution',q:"Which of these is NOT an evolution of Eevee?",a:["Growlithe","Vaporeon","Umbreon","Sylveon"],f:"Eevee has 8 evolutions: Vaporeon, Jolteon, Flareon, Espeon, Umbreon, Leafeon, Glaceon, Sylveon."},
+ {d:'m',c:'Meet the Pokémon',q:"Which Pokémon can transform into any other Pokémon it sees?",a:["Ditto","Mew","Smeargle","Zorua"],f:"Ditto transforms into a copy of its opponent. Mew can learn nearly every move."},
+
+ {d:'h',c:'Types',q:"How many Pokémon types are there right now?",a:["18","15","16","20"],f:"Dark & Steel were added in Gen 2, and Fairy in Gen 6."},
+ {d:'h',c:'Types',q:"Which type is super effective against Dragon?",a:["Ice","Fire","Water","Grass"],f:"Dragon is weak to Ice, Dragon and Fairy. Fire, Water and Grass are all resisted."},
+ {d:'h',c:'Evolution',q:"How does Haunter evolve into Gengar?",a:["By trading it","Fire Stone","Reaching level 50","Using a Potion"],f:"In the games you have to trade it with another player. Spooky."},
+ {d:'h',c:'Types',q:"What type is Dragonite?",a:["Dragon / Flying","Dragon / Water","Dragon / Fire","Dragon only"],f:"Dragonite's 4× weakness is Ice, and it's weak to Rock, Dragon and Fairy too."},
+ {d:'h',c:'Types',q:"Which Pokémon is a Dragon / Ghost type?",a:["Dragapult","Hydreigon","Garchomp","Salamence"],f:"Dragapult launches its Dreepy kids out of its head like missiles."},
+ {d:'h',c:'Types',q:"Lucario is a Fighting type and what else?",a:["Steel","Dark","Psychic","Fairy"],f:"Lucario senses Aura, and Mega Lucario's aura gets even stronger."},
+ {d:'h',c:'Evolution',q:"Which Eeveelution is Dark type?",a:["Umbreon","Espeon","Glaceon","Sylveon"],f:"Umbreon evolves from Eevee at night with high friendship. Espeon is Psychic, Glaceon is Ice, Sylveon is Fairy."},
+ {d:'h',c:'Regions',q:"Which region is home to Scarlet and Violet?",a:["Paldea","Hisui","Galar","Kitakami"],f:"Paldea is based on Spain and Portugal. It's the first fully open-world Pokémon game."},
+ {d:'h',c:'Pokédex',q:"Which Pokémon is Pokédex number #025?",a:["Pikachu","Pichu","Raichu","Meowth"],f:"Pikachu is #025. Raichu is #026, and Pichu is #172."},
+];
+
+const MODES = {
+  rookie:{name:'Rookie', time:20, mix:{e:6,m:4,h:0}},
+  champ:{name:'Champion', time:15, mix:{e:0,m:4,h:6}}
+};
+
+// Mei's reactions: image + lines
+const MEI = {
+  calm:'img/a01-calm.jpg', shocked:'img/a03-shocked.jpg', smile:'img/a07-smile.jpg', bored:'img/a08-bored.jpg',
+  nervous:'img/a09-nervous.jpg', happy:'img/a11-happy2.jpg', sad:'img/a13-sad3.jpg', shy:'img/a14-shy3.jpg'
+};
+const LINES = {
+  title:["Oh! H-hi... I'm <b>Coach Mei</b>. Want to see if you've got what it takes?","Ready to prove you're a Master? Pick a mode and press START!"],
+  ask:["Take your time... but not <b>too</b> much.","Here comes one!","Okay, think carefully.","You've got this."],
+  hurry:["Hurry, hurry, hurry!!","Time's almost up!!","Pick one! Quick!!"],
+  last:["Last question!! No pressure... okay a little pressure.","Final question, trainer. Make it count."],
+  right:["Yes!! That's right!","Nice one!","Correct! You're good at this.","Got it!"],
+  fast:["WHOA, that was fast!","Wait, you already knew that?!","Lightning reflexes!"],
+  streak:["STREAK!! You're on fire!! 🔥","Can't stop, won't stop!!","You're unstoppable!!"],
+  wrong:["Oh no... that wasn't it.","Aww, so close.","It's okay! Learn from it.","Don't worry, even Ash lost a lot."],
+  timeout:["Zzz... huh? Time's up!","*yawn* You ran out of time...","Too slow! Wake up, trainer!"],
+  fifty:["Ooh, a Rotom-style trick: two answers gone!","Smart move. Two options removed."],
+  broke:["Oh! Your streak broke... 😮"]
+};
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+const $ = id => document.getElementById(id);
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+// ---------- SOUND ----------
+let muted = false, ac = null;
+function tone(freq, dur, type='sine', vol=.15, when=0){
+  if(muted) return;
+  try{
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol, ac.currentTime+when);
+    g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime+when+dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(ac.currentTime+when); o.stop(ac.currentTime+when+dur);
+  }catch(e){}
+}
+const sfx = {
+  right(){tone(660,.12,'square',.1);tone(880,.18,'square',.1,.1);},
+  streak(){[660,784,988,1318].forEach((f,i)=>tone(f,.14,'square',.1,i*.08));},
+  wrong(){tone(220,.25,'sawtooth',.1);tone(165,.3,'sawtooth',.1,.15);},
+  tick(){tone(900,.05,'square',.05);},
+  win(){[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,.2,'square',.1,i*.12));},
+  click(){tone(500,.05,'square',.06);}
+};
+$('mute').onclick = ()=>{ muted=!muted; $('mute').textContent = muted?'🔇 Sound off':'🔊 Sound on'; };
+
+// ---------- STATE ----------
+let mode='rookie', S=null, timerId=null;
+
+function setMei(mood, line){
+  const img=$('mei');
+  const src=MEI[mood];
+  if(!img.src.endsWith(src)){ img.src=src; img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop'); }
+  if(line) $('bubble').innerHTML=line;
+}
+function show(id){ ['title','game','result'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+
+function bestKey(){ return 'trainerquiz_best_'+mode; }
+function getBest(){ try{return +localStorage.getItem(bestKey())||0}catch(e){return 0} }
+function setBest(v){ try{localStorage.setItem(bestKey(), v)}catch(e){} }
+function renderBest(){
+  const b=getBest();
+  $('best').textContent = b ? `🏆 Your best ${MODES[mode].name} score: ${b}` : 'Play to set your first high score!';
+}
+
+// title
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.mode').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel'); mode=b.dataset.mode; renderBest(); sfx.click();
+});
+$('start').onclick = startGame;
+$('again').onclick = ()=>{ sfx.click(); toTitle(); };
+$('next').onclick = nextQ;
+$('fifty').onclick = useFifty;
+
+function toTitle(){
+  show('title'); renderBest(); setMei('shy', rnd(LINES.title));
+}
+
+function pickQuestions(){
+  const m=MODES[mode].mix, out=[];
+  for(const d of ['e','m','h']){
+    out.push(...shuffle(BANK.filter(q=>q.d===d)).slice(0,m[d]));
+  }
+  return shuffle(out);
+}
+
+function startGame(){
+  sfx.click();
+  S={qs:pickQuestions(), i:0, score:0, streak:0, best:0, correct:0, res:[], fifty:true, locked:true, t:0, total:MODES[mode].time, cur:null};
+  const balls=$('balls'); balls.innerHTML='';
+  S.qs.forEach(()=>{const b=document.createElement('div');b.className='ball';balls.appendChild(b);});
+  show('game');
+  loadQ();
+}
+
+function loadQ(){
+  const q=S.qs[S.i];
+  const ans=shuffle(q.a.map((t,k)=>({t,ok:k===0})));
+  S.cur={q,ans}; S.locked=false; S.t=S.total; S.startedAt=performance.now();
+  $('qnum').textContent=`Question ${S.i+1}/${S.qs.length}`;
+  $('cat').textContent=q.c;
+  $('q').textContent=q.q;
+  $('feedback').classList.add('hidden'); $('nextrow').classList.add('hidden');
+  const box=$('answers'); box.innerHTML='';
+  ans.forEach((a,idx)=>{
+    const b=document.createElement('button');
+    b.className='ans'; b.innerHTML=`<span class="k">${idx+1}</span><span></span>`;
+    b.lastChild.textContent=a.t;
+    b.onclick=()=>choose(idx);
+    box.appendChild(b);
+  });
+  [...$('balls').children].forEach((b,k)=>b.classList.toggle('on',k===S.i));
+  $('fifty').disabled=!S.fifty;
+  $('fifty').textContent=S.fifty?'✂️ 50/50 (1 left)':'✂️ 50/50 used';
+  updateHud();
+  const last=S.i===S.qs.length-1;
+  setMei('calm', last?rnd(LINES.last):rnd(LINES.ask));
+  runTimer();
+}
+
+function updateHud(){
+  $('score').textContent='⭐ '+S.score;
+  $('streak').textContent='🔥 Streak '+S.streak+(multi()>1?`  (×${multi()})`:'');
+}
+function multi(){ return S.streak>=5?2:S.streak>=3?1.5:1; }
+
+function runTimer(){
+  clearInterval(timerId);
+  const bar=$('timer'); bar.classList.remove('low');
+  let warned=false;
+  timerId=setInterval(()=>{
+    S.t=Math.max(0, S.total-(performance.now()-S.startedAt)/1000);
+    bar.firstElementChild.style.width=(S.t/S.total*100)+'%';
+    if(S.t<=5 && !bar.classList.contains('low')){ bar.classList.add('low'); }
+    if(S.t<=5 && !warned && !S.locked){ warned=true; setMei('nervous', rnd(LINES.hurry)); }
+    if(S.t<=5 && S.t>0 && Math.abs(S.t-Math.round(S.t))<.06) sfx.tick();
+    if(S.t<=0){ clearInterval(timerId); timeout(); }
+  },80);
+}
+
+function useFifty(){
+  if(!S.fifty||S.locked) return;
+  S.fifty=false; sfx.click();
+  $('fifty').disabled=true; $('fifty').textContent='✂️ 50/50 used';
+  const wrongIdx=S.cur.ans.map((a,i)=>a.ok?-1:i).filter(i=>i>=0);
+  shuffle(wrongIdx).slice(0,2).forEach(i=>{ $('answers').children[i].classList.add('gone'); });
+  setMei('shocked', rnd(LINES.fifty));
+}
+
+function lock(){ S.locked=true; clearInterval(timerId); [...$('answers').children].forEach(b=>b.disabled=true); }
+
+function reveal(pick){
+  const kids=[...$('answers').children];
+  S.cur.ans.forEach((a,i)=>{ if(a.ok) kids[i].classList.add('right'); });
+  if(pick>=0 && !S.cur.ans[pick].ok){ kids[pick].classList.add('wrong','shake'); }
+}
+
+function choose(idx){
+  if(S.locked) return;
+  const took=(performance.now()-S.startedAt)/1000;
+  lock(); reveal(idx);
+  const ok=S.cur.ans[idx].ok;
+  const ball=$('balls').children[S.i]; ball.classList.remove('on');
+  let msg='';
+  if(ok){
+    S.streak++; S.best=Math.max(S.best,S.streak); S.correct++;
+    const pts=Math.round((100+Math.floor(S.t)*5)*multi()); S.score+=pts;
+    S.res.push(true); ball.classList.add('got');
+    msg=`<span class="pts">+${pts}</span> ${multi()>1?`(streak bonus ×${multi()}) `:''}· ${S.cur.q.f}`;
+    if(S.streak>=3){ setMei('happy', rnd(LINES.streak)); sfx.streak(); }
+    else if(took<3.5){ setMei('shocked', rnd(LINES.fast)); sfx.right(); }
+    else { setMei('smile', rnd(LINES.right)); sfx.right(); }
+  } else {
+    const had=S.streak; S.streak=0; S.res.push(false); ball.classList.add('miss');
+    msg=`The answer was <b>${S.cur.ans.find(a=>a.ok).t}</b>. ${S.cur.q.f}`;
+    setMei(had>=3?'shocked':'sad', had>=3?rnd(LINES.broke):rnd(LINES.wrong)); sfx.wrong();
+  }
+  afterAnswer(msg);
+}
+
+function timeout(){
+  lock(); reveal(-1);
+  S.streak=0; S.res.push(false);
+  const ball=$('balls').children[S.i]; ball.classList.remove('on'); ball.classList.add('miss');
+  setMei('bored', rnd(LINES.timeout)); sfx.wrong();
+  afterAnswer(`Time's up! The answer was <b>${S.cur.ans.find(a=>a.ok).t}</b>. ${S.cur.q.f}`);
+}
+
+function afterAnswer(msg){
+  updateHud();
+  const fb=$('feedback'); fb.innerHTML=msg; fb.classList.remove('hidden');
+  $('nextrow').classList.remove('hidden');
+  $('next').textContent = S.i===S.qs.length-1 ? 'SEE RESULTS ▶' : 'NEXT ▶';
+  $('next').focus({preventScroll:true});
+}
+
+function nextQ(){
+  sfx.click();
+  if(S.i>=S.qs.length-1) return finish();
+  S.i++; loadQ();
+}
+
+const RANKS=[
+  [10,'🏆 Pokémon Champion','PERFECT! Not a single miss. Truly a Master.'],
+  [8,'⚡ Elite Four Member','So close to perfect! Very impressive.'],
+  [6,'🏅 Gym Leader','Solid knowledge. Badges are in your future.'],
+  [4,'🎒 Youngster','Good start. Keep training!'],
+  [0,'🌱 Rookie Trainer','Every Champion starts here. Try again!']
+];
+
+function finish(){
+  clearInterval(timerId);
+  const r=RANKS.find(r=>S.correct>=r[0]);
+  show('result');
+  $('rank').textContent=r[1]; $('rankline').textContent=r[2];
+  $('rCorrect').textContent=`${S.correct}/${S.qs.length}`; $('rScore').textContent=S.score; $('rStreak').textContent=S.best;
+  const log=$('log'); log.innerHTML='';
+  S.res.forEach(ok=>{const b=document.createElement('div');b.className='ball '+(ok?'got':'miss');log.appendChild(b);});
+  const prev=getBest(); const newBest=S.score>prev;
+  if(newBest) setBest(S.score);
+  S.rankText=r[1];
+  if(S.correct===S.qs.length){ setMei('happy',"PERFECT!!! I knew you could do it!! 🎉"); }
+  else if(S.correct>=8){ setMei('shocked',"Wow!! You really know your stuff!"); }
+  else if(S.correct>=5){ setMei('smile',"Nice job, trainer!"); }
+  else { setMei('shy',"That was fun! Want to try again? I'll... cheer for you."); }
+  if(newBest && prev>0) $('rankline').textContent += '  🎉 NEW HIGH SCORE!';
+  sfx.win();
+}
+
+$('copy').onclick=()=>{
+  const t=`I got ${S.correct}/${S.qs.length} (${S.score} pts) on Trainer Quiz ${MODES[mode].name} mode! Rank: ${S.rankText}`;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{$('copy').textContent='COPIED ✓';}).catch(()=>{$('copy').textContent='(select & copy)';});
+  setTimeout(()=>$('copy').textContent='COPY SCORE',1800);
+};
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(!$('game').classList.contains('hidden')){
+    if(!S.locked && e.key>='1' && e.key<='4'){ choose(+e.key-1); }
+    else if(S.locked && (e.key==='Enter'||e.key===' ')){ if(document.activeElement!==$('next')){ e.preventDefault(); nextQ(); } }
+  } else if(!$('title').classList.contains('hidden') && e.key==='Enter'){ startGame(); }
+});
+
+// preload
+Object.values(MEI).forEach(s=>{const i=new Image();i.src=s;});
+toTitle();
+</script>
+</body>
+</html>
